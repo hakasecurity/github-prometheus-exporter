@@ -11,7 +11,7 @@ from github_prometheus_exporter.settings import settings
 
 logger = get_logger("github exporter")
 
-open_pull_requests_gauge = Gauge("open_pull_requests", "Open pull requests", ["repo_name"])
+open_pull_requests_gauge = Gauge("github_open_pull_requests", "Open pull requests", ["repo_name"])
 
 
 def get_authenticated_api() -> Github:
