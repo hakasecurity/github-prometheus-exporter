@@ -5,25 +5,20 @@ import github
 from github import Github, PullRequest
 from github.Repository import Repository
 from prometheus_client import start_http_server, Gauge
-
+from github_prometheus_exporter.settings import settings
 GITHUB_SCRAPE_INTERVAL = 60
 
-PRIVATE_KEY_PATH = "/Users/gnir/Code/github-prometheus-exporter/github_prometheus_exporter/aim-promhippie-exporter.2024-01-16.private-key.pem"
-APPLICATION_ID = 798085
-INSTALLATION_ID = 46187215
-ORGANIZATION_ID = "hakasecurity"
 open_pull_requests_gauge = Gauge(f"open_pull_requests", f"Open pull requests", ['repo_name'])
 
 
 def get_authenticated_api() -> Github:
-    private_key = Path(PRIVATE_KEY_PATH).read_text()
-    integration = github.GithubIntegration(APPLICATION_ID, private_key)
-    access_token = integration.get_access_token(INSTALLATION_ID).token
+    integration = github.GithubIntegration(settings.application_id, settings.private_key)
+    access_token = integration.get_access_token(settings.installation_id).token
     return github.Github(access_token)
 
 
 def get_all_repositories(g: Github) -> list[Repository]:
-    return list(g.get_organization(ORGANIZATION_ID).get_repos())
+    return list(g.get_organization(settings.organization_id).get_repos())
 
 
 def report_open_pull_requests(repo: Repository) -> list[PullRequest]:
