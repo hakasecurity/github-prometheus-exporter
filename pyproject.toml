@@ -1,0 +1,69 @@
+[tool.poetry]
+name = "github-prometheus-exporter"
+version = "0.1.0"
+description = ""
+authors = ["hxnir <nir@hakasecurity.com>"]
+readme = "README.md"
+packages = [{include = "github_prometheus_exporter"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pygithub = "^2.1.1"
+prometheus-client = "^0.19.0"
+pydantic = "^2.5.3"
+pydantic-settings = "^2.1.0"
+structlog = "^24.1.0"
+
+
+[tool.poetry.group.dev.dependencies]
+ipython = "^8.20.0"
+ruff = "^0.1.13"
+mypy = "^1.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+preview = true
+select = [
+    "ALL"
+]
+ignore = [
+    "A003", # Class attribute is shadowing a Python builtin
+    "ANN101", # Missing type annotation for `self` in method
+    "ANN102", #  Missing type annotation for `cls` in classmethod
+    "ANN401", # Dynamically typed expressions (typing.Any) are disallowed
+    "COM812", # missing-trailing-comma
+    "D", # Docstring
+    "DTZ", # The use of `datetime.datetime.now()` without `tz` argument is not allowed. TODO: Remove this.
+    "EXE002", # The file is executable but no shebang is present
+    "FBT001", # Boolean-typed positional argument in function definition
+    "FBT002", # Boolean default positional argument in function definition
+    "FIX002", # Line contains
+    "G004", # Logging statement uses f-string
+    "PGH003", # Use specific rule codes when ignoring type issues (Dont use type: ignore)
+    "PTH", # `open()` should be replaced by `Path.open()`.
+    "SLOT000", # Subclasses of `str` should define `__slots__`
+    "TD", # Missing author in
+    "W605", # adds `r` before string where backslash exists.
+    "FBT003", # Boolean positional value in function call.
+    "N818",  # Exception name should be named with an Error suffix.
+    "CPY001", #  Missing copyright notice at top of file
+    "PLR6201", # Use a `set` literal when testing for membership
+    "PLW1514", # `open` in text mode without explicit `encoding` argument
+    "PLC1901", # s != "" can be simplified to s as an empty string is falsey. Has many false positives.
+    "PLR0917", # Too many positional arguments.
+    "PLR6301", # Method could be a function, class method, or static method.
+    "ISC001" # single-line-implicit-string-concatenation, conflicts with ruff formating.
+]
+
+[tool.ruff.pylint]
+max-args = 7
+max-branches = 7
+
+[tool.ruff.mccabe]
+max-complexity = 8
