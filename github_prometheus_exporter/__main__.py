@@ -8,7 +8,7 @@ from prometheus_client import start_http_server, Gauge
 
 GITHUB_SCRAPE_INTERVAL = 60
 
-PRIVATE_KEY_PATH = "./aim-promhippie-exporter.2024-01-16.private-key.pem"
+PRIVATE_KEY_PATH = "/Users/gnir/Code/github-prometheus-exporter/github_prometheus_exporter/aim-promhippie-exporter.2024-01-16.private-key.pem"
 APPLICATION_ID = 798085
 INSTALLATION_ID = 46187215
 ORGANIZATION_ID = "hakasecurity"

@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["hxnir <nir@hakasecurity.com>"]
 readme = "README.md"
+packages = [{include = "github_prometheus_exporter"}]
 
 [tool.poetry.dependencies]
 python = "^3.11"
