@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  github-prometheus-exporter:
+  - apiVersion: v2
+    appVersion: latest
+    created: "2024-01-16T16:54:54.925002397Z"
+    description: A Helm chart for Kubernetes
+    digest: 5bd4fba240a415d8b98a692255c80fc8708b9ee1bc6b24727e5abd6e0019557f
+    name: github-prometheus-exporter
+    type: application
+    urls:
+    - https://github.com/hakasecurity/github-prometheus-exporter/releases/download/github-prometheus-exporter-0.1.0/github-prometheus-exporter-0.1.0.tgz
+    version: 0.1.0
+generated: "2024-01-16T16:54:54.925014597Z"
