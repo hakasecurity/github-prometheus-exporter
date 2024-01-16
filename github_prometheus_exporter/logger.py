@@ -3,8 +3,8 @@ import logging
 import structlog
 from structlog.dev import RichTracebackFormatter
 from structlog.typing import Processor
-from github_prometheus_exporter.settings import settings
 
+from github_prometheus_exporter.settings import settings
 
 dev_processors: list[Processor] = [
     structlog.dev.set_exc_info,

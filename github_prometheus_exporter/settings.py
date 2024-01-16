@@ -1,5 +1,5 @@
-from pydantic_settings import BaseSettings
 from pydantic import Base64Str
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -10,4 +10,4 @@ class Settings(BaseSettings):
     environment: str = "development"
 
 
-settings = Settings()
+settings = Settings()  # type: ignore
