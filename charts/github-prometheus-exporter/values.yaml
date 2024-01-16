@@ -87,4 +87,5 @@ githubAuthentication:
        #  secretName: github-prometheus-exporter
        #  key: organizationId
 
+extraObjects: []
 
