@@ -37,21 +37,24 @@ github_open_pr_histogram = Histogram(
         604800,
     ],
 )
-github_actions_histogram = Histogram(
+success_github_actions_histogram = Histogram(
     "success_github_actions_duration",
     "Duration of an action run",
     ["repo_name", "workflow_name"],
     buckets=[1, 5, 10, 30, 60, 120, 180, 240, 300, 360, 420, 480, 600, 900, 1200, 1800],
 )
-failed_github_actions_counter = Counter(
-    "failed_github_actions",
-    "Number of failed actions",
+github_actions_counter = Counter(
+    "github_actions",
+    "Number of actions",
     ["repo_name", "workflow_name", "status"],
 )
 open_pull_requests_gauge = Gauge("github_open_pull_requests", "Open pull requests", ["repo_name"])
 
 SATURDAY = 5
 FRIDAY = 4
+LAST_OPEN_PRS_FETCH_TIME = datetime.now(tz=pytz.UTC)
+LAST_MERGED_PRS_FETCH_TIME = datetime.now(tz=pytz.UTC)
+LAST_WORKFLOWS_FETCH_TIME = datetime.now(tz=pytz.UTC)
 
 
 def get_authenticated_api() -> Github:
@@ -88,39 +91,49 @@ def get_workflow_runs(repo: Repository, from_time: datetime) -> list[WorkflowRun
     for workflow in repo.get_workflow_runs():
         if workflow.created_at.astimezone(pytz.utc) < from_time:
             break
-        result.append(workflow)
+        if workflow.conclusion in ["success", "failure"]:
+            result.append(workflow)
     return result
 
 
-def report_workflow_runs(from_time: datetime, repo: Repository) -> None:
-    workflows = get_workflow_runs(repo, from_time)
+def report_workflow_runs(repo: Repository) -> None:
+    global LAST_WORKFLOWS_FETCH_TIME  # noqa: PLW0603
+    start_time = datetime.now(tz=pytz.UTC)
+    logger.info(f"Fetching workflow runs for {repo.name} since {LAST_WORKFLOWS_FETCH_TIME}")
+    workflows = get_workflow_runs(repo, LAST_WORKFLOWS_FETCH_TIME)
+    LAST_WORKFLOWS_FETCH_TIME = start_time
+
     report_success_workflows(repo, workflows)
     report_all_workflows_count_and_status(repo, workflows)
 
 
 def report_success_workflows(repo: Repository, workflows: list[WorkflowRun]) -> None:
-    success_workflow = [workflow for workflow in workflows if workflow.status == "success"]
+    success_workflow = [workflow for workflow in workflows if workflow.status in ["success", "completed"]]
     for workflow in success_workflow:
-        github_actions_histogram.labels(repo_name=repo.name, workflow_name=workflow.name).observe(
+        success_github_actions_histogram.labels(repo_name=repo.name, workflow_name=workflow.name).observe(
             workflow.timing().run_duration_ms / 1000
         )
 
 
 def report_all_workflows_count_and_status(repo: Repository, workflows: list[WorkflowRun]) -> None:
     for workflow in workflows:
-        failed_github_actions_counter.labels(
-            repo_name=repo.name, workflow_name=workflow.name, status=workflow.status
-        ).inc(1)
+        github_actions_counter.labels(repo_name=repo.name, workflow_name=workflow.name, status=workflow.conclusion).inc(
+            1
+        )
 
 
-def update_repo_metrics(repo: Repository, from_time: datetime) -> None:
-    report_opened_pull_requests(from_time, repo)
-    report_merge_time(from_time, repo)
-    report_workflow_runs(from_time, repo)
+def update_repo_metrics(repo: Repository) -> None:
+    report_opened_pull_requests(repo)
+    report_merge_time(repo)
+    report_workflow_runs(repo)
 
 
-def report_merge_time(from_time: datetime, repo: Repository) -> None:
-    merged_pull_requests = get_merged_pull_requests(repo, from_time)
+def report_merge_time(repo: Repository) -> None:
+    global LAST_MERGED_PRS_FETCH_TIME  # noqa: PLW0603
+    start_time = datetime.now(tz=pytz.UTC)
+    logger.info(f"Fetching merged pull requests for {repo.name} since {LAST_MERGED_PRS_FETCH_TIME}")
+    merged_pull_requests = get_merged_pull_requests(repo, LAST_MERGED_PRS_FETCH_TIME)
+    LAST_MERGED_PRS_FETCH_TIME = start_time
 
     merged_pull_requests_without_deploy = [
         pull_request for pull_request in merged_pull_requests if "deploy" not in pull_request.title.lower()
@@ -141,21 +154,32 @@ def get_pr_duration_without_weekend(pull_request: PullRequest) -> float:
     return duration
 
 
-def report_opened_pull_requests(from_time: datetime, repo: Repository) -> None:
-    open_pull_requests = get_open_pull_requests(repo, from_time)
+def report_opened_pull_requests(repo: Repository) -> None:
+    global LAST_OPEN_PRS_FETCH_TIME  # noqa: PLW0603
+    start_time = datetime.now(tz=pytz.UTC)
+    logger.info(f"Fetching open pull requests for {repo.name} since {LAST_OPEN_PRS_FETCH_TIME}")
+    open_pull_requests = get_open_pull_requests(repo, LAST_OPEN_PRS_FETCH_TIME)
+    LAST_OPEN_PRS_FETCH_TIME = start_time
     open_pull_requests_gauge.labels(repo_name=repo.name).set(len(open_pull_requests))
 
 
 def update_metrics() -> None:
-    last_fetch_time = datetime.now(tz=pytz.UTC)
+    start_fetch_time = datetime.now(tz=pytz.UTC)
+
+    global LAST_OPEN_PRS_FETCH_TIME  # noqa: PLW0603
+    global LAST_MERGED_PRS_FETCH_TIME  # noqa: PLW0603
+    global LAST_WORKFLOWS_FETCH_TIME  # noqa: PLW0603
+    LAST_OPEN_PRS_FETCH_TIME = start_fetch_time
+    LAST_MERGED_PRS_FETCH_TIME = start_fetch_time
+    LAST_WORKFLOWS_FETCH_TIME = start_fetch_time
+
     while True:
-        logger.info(f"Starting to scrape github since {last_fetch_time}")
+        logger.info(f"Starting to scrape github since {start_fetch_time}")
         g = get_authenticated_api()
         repos = get_all_repositories(g)
         for repo in repos:
-            logger.info(f"Scraping {repo=} since {last_fetch_time}")
-            update_repo_metrics(repo, last_fetch_time)
-        last_fetch_time = datetime.now(tz=pytz.UTC)
+            logger.info(f"Scraping {repo=} since {start_fetch_time}")
+            update_repo_metrics(repo)
         time.sleep(settings.github_scrape_interval)
 
 
