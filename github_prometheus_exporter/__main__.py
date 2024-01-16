@@ -37,7 +37,7 @@ github_open_pr_histogram = Histogram(
         604800,
     ],
 )
-success_github_actions_histogram = Histogram(
+github_success_actions_histogram = Histogram(
     "success_github_actions_duration",
     "Duration of an action run",
     ["repo_name", "workflow_name"],
@@ -110,7 +110,7 @@ def report_workflow_runs(repo: Repository) -> None:
 def report_success_workflows(repo: Repository, workflows: list[WorkflowRun]) -> None:
     success_workflow = [workflow for workflow in workflows if workflow.status in ["success", "completed"]]
     for workflow in success_workflow:
-        success_github_actions_histogram.labels(repo_name=repo.name, workflow_name=workflow.name).observe(
+        github_success_actions_histogram.labels(repo_name=repo.name, workflow_name=workflow.name).observe(
             workflow.timing().run_duration_ms / 1000
         )
 
