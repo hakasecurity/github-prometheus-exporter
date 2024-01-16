@@ -5,6 +5,9 @@ on:
     branches:
       - 'main'
 
+concurrency:
+  group: build-and-push
+
 jobs:
   docker:
     runs-on: ubuntu-latest
