@@ -67,6 +67,3 @@ max-branches = 7
 
 [tool.ruff.mccabe]
 max-complexity = 8
-
-[tool.ruff.isort]
-known-first-party = ["haka_schema", "haka_libraries", "haka_dlp_analyzer_api_client"]
