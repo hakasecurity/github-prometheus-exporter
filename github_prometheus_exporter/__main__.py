@@ -11,8 +11,6 @@ from github_prometheus_exporter.settings import settings
 
 logger = get_logger("github exporter")
 
-GITHUB_SCRAPE_INTERVAL = 60
-
 open_pull_requests_gauge = Gauge("open_pull_requests", "Open pull requests", ["repo_name"])
 
 
@@ -43,7 +41,7 @@ def update_metrics() -> None:
         for repo in repos:
             logger.info(f"Scraping {repo=}")
             update_repo_metrics(repo)
-        time.sleep(GITHUB_SCRAPE_INTERVAL)
+        time.sleep(settings.github_scrape_interval)
 
 
 def main() -> None:
