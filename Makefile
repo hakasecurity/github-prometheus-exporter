@@ -9,7 +9,7 @@ setup:
 	pipx install poetry
 
 install:
-	poetry install --with dev --with test
+	poetry install --with dev
 
 format:
 	poetry run ruff format
