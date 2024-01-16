@@ -17,7 +17,25 @@ github_open_pr_histogram = Histogram(
     "github_pr_duration",
     "Duration of an opened pr until merge",
     ["repo_name"],
-    buckets=[hours * 60 * 60 for hours in range(72)],
+    buckets=[
+        300,
+        600,
+        900,
+        1200,
+        1800,
+        3600,
+        7200,
+        10800,
+        14400,
+        18000,
+        21600,
+        43200,
+        86400,
+        172800,
+        259200,
+        345600,
+        604800,
+    ],
 )
 github_actions_histogram = Histogram(
     "success_github_actions_duration",
@@ -28,12 +46,12 @@ github_actions_histogram = Histogram(
 failed_github_actions_counter = Counter(
     "failed_github_actions",
     "Number of failed actions",
-    ["repo_name", "workflow_name"],
+    ["repo_name", "workflow_name", "status"],
 )
 open_pull_requests_gauge = Gauge("github_open_pull_requests", "Open pull requests", ["repo_name"])
 
-Saturday = 5
-Friday = 4
+SATURDAY = 5
+FRIDAY = 4
 
 
 def get_authenticated_api() -> Github:
@@ -47,52 +65,52 @@ def get_all_repositories(g: Github) -> list[Repository]:
 
 
 def get_open_pull_requests(repo: Repository, from_time: datetime) -> list[PullRequest]:
-    return [
-        pull_request
-        for pull_request in repo.get_pulls(state="open", sort="created", direction="desc")
-        if pull_request.created_at.astimezone(pytz.utc) >= from_time
-    ]
+    result = []
+    for pull_request in repo.get_pulls(state="open", sort="created", direction="desc"):
+        if pull_request.created_at.astimezone(pytz.utc) < from_time:
+            break
+        result.append(pull_request)
+    return result
 
 
 def get_merged_pull_requests(repo: Repository, from_time: datetime) -> list[PullRequest]:
-    try:
-        return [
-            pull_request
-            for pull_request in repo.get_pulls(state="closed", sort="created", direction="desc")[:100]
-            if pull_request.merged_at and pull_request.merged_at.astimezone(pytz.utc) >= from_time
-        ]
-    except IndexError:
-        return []
+    result = []
+    for pull_request in repo.get_pulls(state="closed", sort="created", direction="desc"):
+        if pull_request.merged_at and pull_request.merged_at.astimezone(pytz.utc) < from_time:
+            break
+        if pull_request.merged:
+            result.append(pull_request)
+    return result
 
 
-def get_workflow_runs(repo: Repository, from_time: datetime, status: str) -> list[WorkflowRun]:
-    try:
-        return [
-            workflow
-            for workflow in repo.get_workflow_runs(status=status)[:500]
-            if workflow.created_at.astimezone(pytz.utc) >= from_time
-        ]
-    except IndexError:
-        return []
+def get_workflow_runs(repo: Repository, from_time: datetime) -> list[WorkflowRun]:
+    result = []
+    for workflow in repo.get_workflow_runs():
+        if workflow.created_at.astimezone(pytz.utc) < from_time:
+            break
+        result.append(workflow)
+    return result
 
 
 def report_workflow_runs(from_time: datetime, repo: Repository) -> None:
-    report_success_workflows(from_time, repo)
-    report_failed_workflows(from_time, repo)
+    workflows = get_workflow_runs(repo, from_time)
+    report_success_workflows(repo, workflows)
+    report_all_workflows_count_and_status(repo, workflows)
 
 
-def report_success_workflows(from_time: datetime, repo: Repository) -> None:
-    success_workflow = get_workflow_runs(repo, from_time, "success")
+def report_success_workflows(repo: Repository, workflows: list[WorkflowRun]) -> None:
+    success_workflow = [workflow for workflow in workflows if workflow.status == "success"]
     for workflow in success_workflow:
         github_actions_histogram.labels(repo_name=repo.name, workflow_name=workflow.name).observe(
             workflow.timing().run_duration_ms / 1000
         )
 
 
-def report_failed_workflows(from_time: datetime, repo: Repository) -> None:
-    failed_workflow = get_workflow_runs(repo, from_time, "failure")
-    for workflow in failed_workflow:
-        failed_github_actions_counter.labels(repo_name=repo.name, workflow_name=workflow.name).inc(1)
+def report_all_workflows_count_and_status(repo: Repository, workflows: list[WorkflowRun]) -> None:
+    for workflow in workflows:
+        failed_github_actions_counter.labels(
+            repo_name=repo.name, workflow_name=workflow.name, status=workflow.status
+        ).inc(1)
 
 
 def update_repo_metrics(repo: Repository, from_time: datetime) -> None:
@@ -118,7 +136,7 @@ def get_pr_duration_without_weekend(pull_request: PullRequest) -> float:
         pull_request.created_at + timedelta(days=days)
         for days in range((pull_request.merged_at - pull_request.created_at).days)  # type: ignore
     ]
-    if Friday in [date.weekday() for date in dates] and Saturday in [date.weekday() for date in dates]:
+    if FRIDAY in [date.weekday() for date in dates] and SATURDAY in [date.weekday() for date in dates]:
         duration -= 2 * 24 * 60 * 60
     return duration
 
@@ -129,7 +147,7 @@ def report_opened_pull_requests(from_time: datetime, repo: Repository) -> None:
 
 
 def update_metrics() -> None:
-    last_fetch_time = datetime.now(tz=pytz.UTC) - timedelta(days=1)
+    last_fetch_time = datetime.now(tz=pytz.UTC)
     while True:
         logger.info(f"Starting to scrape github since {last_fetch_time}")
         g = get_authenticated_api()
