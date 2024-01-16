@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     organization_id: str = "hakasecurity"
     environment: str = "development"
     github_scrape_interval: int = timedelta(seconds=120).seconds
+    port: int = 12345
 
 
 settings = Settings()  # type: ignore

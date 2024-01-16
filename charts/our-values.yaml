@@ -1,0 +1,20 @@
+---
+githubAuthentication:
+  privateKey:
+    secretKeyRef:
+      secretName: test
+      key: my-key
+
+  applicationId:
+    secretKeyRef:
+      secretName: test
+      key: my-key2
+
+  installationId:
+    value: '345'
+
+  organizationId:
+    value: '456'
+
+
+

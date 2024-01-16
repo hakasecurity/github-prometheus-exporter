@@ -47,7 +47,7 @@ def update_metrics() -> None:
 def main() -> None:
     logger.info("Exporter started")
     logger.info("Starting prometheus http server")
-    start_http_server(12345)
+    start_http_server(settings.port)
     logger.info("Started prometheus http server")
     update_metrics()
 

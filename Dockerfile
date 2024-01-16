@@ -24,6 +24,4 @@ RUN poetry install
 
 COPY --chown=haka github_prometheus_exporter /app/github_prometheus_exporter/github_prometheus_exporter
 
-EXPOSE 12345
-
 CMD ["poetry", "run", "python", "-m", "github_prometheus_exporter"]
