@@ -11,6 +11,7 @@ pygithub = "^2.1.1"
 ipython = "^8.20.0"
 ruff = "^0.1.13"
 mypy = "^1.8.0"
+prometheus-client = "^0.19.0"
 
 
 [build-system]
@@ -36,20 +37,20 @@ ignore = [
     "EXE002", # The file is executable but no shebang is present
     "FBT001", # Boolean-typed positional argument in function definition
     "FBT002", # Boolean default positional argument in function definition
-    "FIX002", # Line contains TODO, consider resolving the issue
+    "FIX002", # Line contains
     "G004", # Logging statement uses f-string
     "PGH003", # Use specific rule codes when ignoring type issues (Dont use type: ignore)
-    "PTH", # `open()` should be replaced by `Path.open()`. TODO: Remove this.
+    "PTH", # `open()` should be replaced by `Path.open()`.
     "SLOT000", # Subclasses of `str` should define `__slots__`
-    "TD", # Missing author in TODO
-    "W605", # adds `r` before string where backslash exists. TODO: remove this.
-    "FBT003", # Boolean positional value in function call. TODO: remove this.
-    "N818",  # Exception name should be named with an Error suffix. TODO: remove this.
+    "TD", # Missing author in
+    "W605", # adds `r` before string where backslash exists.
+    "FBT003", # Boolean positional value in function call.
+    "N818",  # Exception name should be named with an Error suffix.
     "CPY001", #  Missing copyright notice at top of file
     "PLR6201", # Use a `set` literal when testing for membership
-    "PLW1514", # `open` in text mode without explicit `encoding` argument TODO: remove this.
+    "PLW1514", # `open` in text mode without explicit `encoding` argument
     "PLC1901", # s != "" can be simplified to s as an empty string is falsey. Has many false positives.
-    "PLR0917", # Too many positional arguments. TODO: remove this.
+    "PLR0917", # Too many positional arguments.
     "PLR6301", # Method could be a function, class method, or static method.
     "ISC001" # single-line-implicit-string-concatenation, conflicts with ruff formating.
 ]

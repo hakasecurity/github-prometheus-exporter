@@ -1,13 +1,18 @@
+import time
 from pathlib import Path
 
 import github
-from github import Github
+from github import Github, PullRequest
 from github.Repository import Repository
+from prometheus_client import start_http_server, Gauge
+
+GITHUB_SCRAPE_INTERVAL = 60
 
 PRIVATE_KEY_PATH = "./aim-promhippie-exporter.2024-01-16.private-key.pem"
 APPLICATION_ID = 798085
 INSTALLATION_ID = 46187215
 ORGANIZATION_ID = "hakasecurity"
+open_pull_requests_gauge = Gauge(f"open_pull_requests", f"Open pull requests", ['repo_name'])
 
 
 def get_authenticated_api() -> Github:
@@ -21,10 +26,27 @@ def get_all_repositories(g: Github) -> list[Repository]:
     return list(g.get_organization(ORGANIZATION_ID).get_repos())
 
 
-def main() -> None:
-    g = get_authenticated_api()
+def report_open_pull_requests(repo: Repository) -> list[PullRequest]:
+    return list(repo.get_pulls(state="open"))
 
-    g.get_repo("hakasecurity/haka")
+
+def update_repo_metrics(repo: Repository):
+    open_pull_requests = report_open_pull_requests(repo)
+    open_pull_requests_gauge.labels(repo_name=repo.name).set(len(open_pull_requests))
+
+
+def update_metrics():
+    while True:
+        g = get_authenticated_api()
+        repos = get_all_repositories(g)
+        for repo in repos:
+            update_repo_metrics(repo)
+        time.sleep(GITHUB_SCRAPE_INTERVAL)
+
+
+def main() -> None:
+    start_http_server(12345)
+    update_metrics()
 
 
 if __name__ == "__main__":
