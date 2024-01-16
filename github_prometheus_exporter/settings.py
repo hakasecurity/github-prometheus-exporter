@@ -5,13 +5,14 @@ from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
-    private_key: Base64Str
-    application_id: int = 798085
-    installation_id: int = 46187215
-    organization_id: str = "hakasecurity"
     environment: str = "development"
     github_scrape_interval: int = timedelta(seconds=120).seconds
     port: int = 12345
+
+    private_key: Base64Str
+    application_id: int
+    installation_id: int
+    organization_id: str
 
 
 settings = Settings()  # type: ignore
